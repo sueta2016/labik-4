@@ -25,9 +25,9 @@ var (
 var (
 	timeout     = time.Duration(*timeoutSec) * time.Second
 	serversPool = []string{
-		"server1:8080",
-		"server2:8080",
-		"server3:8080",
+		"first_host:8080",
+		"second_host:8080",
+		"third_host:8080",
 	}
 	healthyPool = make([]string, len(serversPool))
 )
@@ -110,16 +110,16 @@ func getIndex(address string) int {
 	return serverIndex
 }
 
-func healthCheck(servers []string, result []string) {
-	for i, server := range servers {
-		server := server
+func healthCheck(hosts []string, result []string) {
+	for i, host := range hosts {
+		host := host
 		i := i
 		go func() {
 			for range time.Tick(10 * time.Second) {
-				if health(server) {
-					result[i] = server
+				if health(host) {
+					result[i] = host
 				}
-				log.Println(server, health(server))
+				log.Println(host, health(host))
 			}
 		}()
 	}
