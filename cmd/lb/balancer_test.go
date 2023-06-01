@@ -29,26 +29,26 @@ func (s *TestSuite) TestBalancer(c *C) {
 func (s *TestSuite) TestHealth(c *C) {
 	result := make([]string, len(serversPool))
 
-	server1 := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	first_host := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
-	defer server1.Close()
+	defer first_host.Close()
 
-	server2 := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	second_host := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
-	defer server2.Close()
+	defer second_host.Close()
 
-	parsedURL1, _ := url.Parse(server1.URL)
+	parsedURL1, _ := url.Parse(first_host.URL)
 	hostURL1 := parsedURL1.Host
 
-	parsedURL2, _ := url.Parse(server1.URL)
+	parsedURL2, _ := url.Parse(first_host.URL)
 	hostURL2 := parsedURL2.Host
 
 	servers := []string{
 		hostURL1,
 		hostURL2,
-		"server3:8080",
+		"third_host:8080",
 	}
 
 	healthCheck(servers, result)
