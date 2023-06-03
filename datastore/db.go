@@ -126,7 +126,7 @@ func (db *Db) mergeSegments() {
 				if i < lastSegmentIndex {
 					duplicated := false
 					for _, segment := range db.segments[i+1 : lastSegmentIndex+1] {
-						if _, success := segment.index[key]; success {
+						if _, ok := segment.index[key]; ok {
 							duplicated = true
 							break
 						}
@@ -199,20 +199,20 @@ func (db *Db) Get(key string) (string, error) {
 	var (
 		segment  *Segment
 		position int64
-		success  bool
+		ok       bool
 	)
 
 	for i := range db.segments {
 		segment = db.segments[len(db.segments)-i-1]
 		segment.lock.RLock()
-		position, success = segment.index[key]
+		position, ok = segment.index[key]
 		segment.lock.RUnlock()
-		if success {
+		if ok {
 			break
 		}
 	}
 
-	if !success {
+	if !ok {
 		return "", ErrNotFound
 	}
 
@@ -261,20 +261,20 @@ func (db *Db) Delete(key string) error {
 	var (
 		segment  *Segment
 		position int64
-		success	 bool
+		ok       bool
 	)
 
 	for i := range db.segments {
 		segment = db.segments[len(db.segments)-i-1]
 		segment.lock.RLock()
-		position, success = segment.index[key]
+		position, ok = segment.index[key]
 		segment.lock.RUnlock()
-		if success {
+		if ok {
 			break
 		}
 	}
 
-	if !success {
+	if !ok {
 		return ErrNotFound
 	}
 
@@ -296,3 +296,5 @@ func (db *Db) Delete(key string) error {
 
 	return nil
 }
+
+func (db *Db) Close() { db.out.Close() }
