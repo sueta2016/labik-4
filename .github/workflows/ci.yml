@@ -1,13 +1,9 @@
-# This workflow will build a golang project
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
-
-name: Continious integration
+name: CI
 
 on:
   push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
+    branches:
+      - main
 
 jobs:
   build-and-test:
@@ -21,4 +17,6 @@ jobs:
         run: docker-compose -f docker-compose.yaml -f docker-compose.test.yaml up --exit-code-from test
 
       - name: Run Unit Tests
-        run: go test -v ./cmd/lb
+        run: |
+          go test -v ./cmd/lb
+          go test -v ./datastore
