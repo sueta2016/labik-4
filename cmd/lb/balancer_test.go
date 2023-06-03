@@ -17,38 +17,39 @@ type TestSuite struct{}
 var _ = Suite(&TestSuite{})
 
 func (s *TestSuite) TestBalancer(c *C) {
-	first_host := getIndex("127.0.0.1:8080")
-	second_host := getIndex("192.168.0.0:80")
-	third_host := getIndex("26.143.218.9:80")
+	// TODO: Реалізуйте юніт-тест для балансувальникка.
+	address1 := getIndex("127.0.0.1:8080")
+	address2 := getIndex("192.168.0.0:80")
+	address3 := getIndex("26.143.218.9:80")
 
-	c.Assert(first_host, Equals, 2)
-	c.Assert(second_host, Equals, 0)
-	c.Assert(third_host, Equals, 1)
+	c.Assert(address1, Equals, 2)
+	c.Assert(address2, Equals, 0)
+	c.Assert(address3, Equals, 1)
 }
 
 func (s *TestSuite) TestHealth(c *C) {
 	result := make([]string, len(serversPool))
 
-	first_host := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server1 := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
-	defer first_host.Close()
+	defer server1.Close()
 
-	second_host := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server2 := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
-	defer second_host.Close()
+	defer server2.Close()
 
-	parsedURL1, _ := url.Parse(first_host.URL)
+	parsedURL1, _ := url.Parse(server1.URL)
 	hostURL1 := parsedURL1.Host
 
-	parsedURL2, _ := url.Parse(first_host.URL)
+	parsedURL2, _ := url.Parse(server1.URL)
 	hostURL2 := parsedURL2.Host
 
 	servers := []string{
 		hostURL1,
 		hostURL2,
-		"third_host:8080",
+		"server3:8080",
 	}
 
 	healthCheck(servers, result)

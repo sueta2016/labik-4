@@ -16,7 +16,7 @@ func main() {
 	client.Timeout = 10 * time.Second
 
 	for range time.Tick(1 * time.Second) {
-		resp, err := client.Get(fmt.Sprintf("%s/api/v1/some-data", *target))
+		resp, err := client.Get(fmt.Sprintf("%s/api/v1/some-data?key=sueta2016", *target))
 		if err == nil {
 			log.Printf("response %d", resp.StatusCode)
 		} else {
