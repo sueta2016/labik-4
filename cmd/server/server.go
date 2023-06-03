@@ -9,7 +9,6 @@ import (
 	"os"
 	"strconv"
 	"time"
-
 	"github.com/roman-mazur/design-practice-2-template/httptools"
 	"github.com/roman-mazur/design-practice-2-template/signal"
 )
@@ -89,6 +88,8 @@ func main() {
 
 	server := httptools.CreateServer(*port, mux)
 	server.Start()
+
+	time.Sleep(5 * time.Second)
 
 	buffer := new(bytes.Buffer)
 	body := Request{Value: time.Now().Format(time.RFC3339)}
