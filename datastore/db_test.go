@@ -37,7 +37,7 @@ func TestPutGet(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	t.Run("Put/Get Check", func(t *testing.T) {
+	t.Run("Tests for basic operations (PUT and GET)", func(t *testing.T) {
 		for i := 0; i < len(data); i++ {
 			key := data[i].key
 			value := data[i].value
@@ -53,7 +53,7 @@ func TestPutGet(t *testing.T) {
 			}
 
 			if result != value {
-				t.Errorf("Bad value returned expected %s, got %s", value, result)
+				t.Errorf("Expected %s, got %s", value, result)
 			}
 		}
 	})
@@ -81,7 +81,7 @@ func TestPutGet(t *testing.T) {
 		}
 
 		if size1*2 != outInfo.Size() {
-			t.Errorf("Unexpected size (%d != %d)", size1, outInfo.Size())
+			t.Errorf("Expected %d, got %d", size1, outInfo.Size())
 		}
 	})
 
@@ -105,7 +105,7 @@ func TestPutGet(t *testing.T) {
 			}
 
 			if result != value {
-				t.Errorf("Bad value returned expected %s, got %s", value, result)
+				t.Errorf("Expected %s, got %s", value, result)
 			}
 		}
 	})
