@@ -25,9 +25,9 @@ var (
 var (
 	timeout     = time.Duration(*timeoutSec) * time.Second
 	serversPool = []string{
-		"first_host:8080",
-		"second_host:8080",
-		"third_host:8080",
+		"server1:8080",
+		"server2:8080",
+		"server3:8080",
 	}
 	healthyPool = make([]string, len(serversPool))
 )
@@ -89,7 +89,6 @@ func forward(dst string, rw http.ResponseWriter, r *http.Request) error {
 func main() {
 	flag.Parse()
 
-	// TODO: Використовуйте дані про стан сервреа, щоб підтримувати список тих серверів, яким можна відправляти ззапит.
 	healthCheck(serversPool, healthyPool)
 
 	frontend := httptools.CreateServer(*port, http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
@@ -110,16 +109,16 @@ func getIndex(address string) int {
 	return serverIndex
 }
 
-func healthCheck(hosts []string, result []string) {
-	for i, host := range hosts {
-		host := host
+func healthCheck(servers []string, result []string) {
+	for i, server := range servers {
+		server := server
 		i := i
 		go func() {
 			for range time.Tick(10 * time.Second) {
-				if health(host) {
-					result[i] = host
+				if health(server) {
+					result[i] = server
 				}
-				log.Println(host, health(host))
+				log.Println(server, health(server))
 			}
 		}()
 	}

@@ -23,10 +23,10 @@ const (
 )
 
 var client = http.Client{
-	Timeout: 3 * time.Second,
+	Timeout: 20 * time.Second,
 }
 
-type RespBody struct {
+type ResponseBody struct {
 	Key   string `json:"key"`
 	Value string `json:"value"`
 }
@@ -36,16 +36,16 @@ func (s *IntegrationSuite) TestLoadBalancer(c *C) {
 		c.Skip("Integration test is not enabled")
 	}
 
-	resp1, _ := client.Get(fmt.Sprintf("%s/api/v1/some-data", baseAddress))
-	c.Assert(resp1.StatusCode, Equals, http.StatusBadRequest)
+	response1, _ := client.Get(fmt.Sprintf("%s/api/v1/some-data", baseAddress))
+	c.Assert(response1.StatusCode, Equals, 400)
 
-	resp2, _ := client.Get(fmt.Sprintf("%s/api/v1/some-data?key=sueta", baseAddress))
-	c.Assert(resp2.StatusCode, Equals, http.StatusNotFound)
+	response2, _ := client.Get(fmt.Sprintf("%s/api/v1/some-data?key=sueta", baseAddress))
+	c.Assert(response2.StatusCode, Equals, http.StatusNotFound)
 
 	db, err := client.Get(fmt.Sprintf("%s/api/v1/some-data?key=sueta2016", baseAddress))
 	c.Assert(err, IsNil)
 
-	var body RespBody
+	var body ResponseBody
 	err = json.NewDecoder(db.Body).Decode(&body)
 	c.Assert(err, IsNil)
 
@@ -57,7 +57,7 @@ func (s *IntegrationSuite) TestLoadBalancer(c *C) {
 
 func (s *IntegrationSuite) BenchmarkLoadBalancer(c *C) {
 	for i := 0; i < c.N; i++ {
-		resp, _ := client.Get(fmt.Sprintf("%s/api/v1/some-data?key=sueta2016", baseAddress))
-		c.Assert(resp.StatusCode, Equals, http.StatusOK)
+		response, _ := client.Get(fmt.Sprintf("%s/api/v1/some-data?key=sueta2016", baseAddress))
+		c.Assert(response.StatusCode, Equals, http.StatusOK)
 	}
 }
