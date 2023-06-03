@@ -126,7 +126,7 @@ func (db *Db) mergeSegments() {
 				if i < lastSegmentIndex {
 					duplicated := false
 					for _, segment := range db.segments[i+1 : lastSegmentIndex+1] {
-						if _, ok := segment.index[key]; ok {
+						if _, success := segment.index[key]; success {
 							duplicated = true
 							break
 						}
@@ -199,20 +199,20 @@ func (db *Db) Get(key string) (string, error) {
 	var (
 		segment  *Segment
 		position int64
-		ok       bool
+		success  bool
 	)
 
 	for i := range db.segments {
 		segment = db.segments[len(db.segments)-i-1]
 		segment.lock.RLock()
-		position, ok = segment.index[key]
+		position, success = segment.index[key]
 		segment.lock.RUnlock()
-		if ok {
+		if success {
 			break
 		}
 	}
 
-	if !ok {
+	if !success {
 		return "", ErrNotFound
 	}
 
@@ -250,6 +250,49 @@ func (db *Db) Put(key, value string) error {
 	db.segments[len(db.segments)-1].index[entry.key] = db.outOffset
 	db.segments[len(db.segments)-1].lock.Unlock()
 	db.outOffset += int64(n)
+
+	return nil
+}
+
+func (db *Db) Delete(key string) error {
+	db.indexLock.Lock()
+	defer db.indexLock.Unlock()
+
+	var (
+		segment  *Segment
+		position int64
+		success	 bool
+	)
+
+	for i := range db.segments {
+		segment = db.segments[len(db.segments)-i-1]
+		segment.lock.RLock()
+		position, success = segment.index[key]
+		segment.lock.RUnlock()
+		if success {
+			break
+		}
+	}
+
+	if !success {
+		return ErrNotFound
+	}
+
+	deletionToken := []byte("DELETED")
+	file, err := os.OpenFile(segment.outPath, os.O_RDWR, 0o600)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	_, err = file.WriteAt(deletionToken, position)
+	if err != nil {
+		return err
+	}
+
+	segment.lock.Lock()
+	delete(segment.index, key)
+	segment.lock.Unlock()
 
 	return nil
 }
