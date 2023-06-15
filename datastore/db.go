@@ -156,36 +156,44 @@ func (db *Db) recover() error {
 	var err error
 	var buf [bufSize]byte
 
-	in := bufio.NewReaderSize(db.out, bufSize)
-	for err == nil {
-		var (
-			header, data []byte
-			n            int
-		)
-		header, err = in.Peek(bufSize)
-		if err == io.EOF {
-			if len(header) == 0 {
-				return err
-			}
-		} else if err != nil {
+	for _, segment := range db.segments {
+		file, err := os.Open(segment.outPath)
+		if err != nil {
 			return err
 		}
-		size := binary.LittleEndian.Uint32(header)
+		defer file.Close()
 
-		if size < bufSize {
-			data = buf[:size]
-		} else {
-			data = make([]byte, size)
-		}
-		n, err = in.Read(data)
+		in := bufio.NewReaderSize(file, bufSize)
+		for err == nil {
+			var (
+				header, data []byte
+				n            int
+			)
+			header, err = in.Peek(bufSize)
+			if err == io.EOF {
+				if len(header) == 0 {
+					break
+				}
+			} else if err != nil {
+				return err
+			}
+			size := binary.LittleEndian.Uint32(header)
 
-		if err == nil {
-			var e entry
-			e.Decode(data)
-			db.indexLock.Lock()
-			db.segments[len(db.segments)-1].index[e.key] = db.outOffset
-			db.indexLock.Unlock()
-			db.outOffset += int64(n)
+			if size < bufSize {
+				data = buf[:size]
+			} else {
+				data = make([]byte, size)
+			}
+			n, err = in.Read(data)
+
+			if err == nil {
+				var e entry
+				e.Decode(data)
+				db.indexLock.Lock()
+				segment.index[e.key] = db.outOffset
+				db.indexLock.Unlock()
+				db.outOffset += int64(n)
+			}
 		}
 	}
 
@@ -216,7 +224,16 @@ func (db *Db) Get(key string) (string, error) {
 		return "", ErrNotFound
 	}
 
-	return segment.getValue(position)
+	value, err := segment.getValue(position)
+	if err != nil {
+		return "", err
+	}
+
+	if value == "DELETED" {
+		return "", ErrNotFound
+	}
+
+	return value, nil
 }
 
 func (db *Db) Put(key, value string) error {
@@ -255,46 +272,7 @@ func (db *Db) Put(key, value string) error {
 }
 
 func (db *Db) Delete(key string) error {
-	db.indexLock.Lock()
-	defer db.indexLock.Unlock()
-
-	var (
-		segment  *Segment
-		position int64
-		ok       bool
-	)
-
-	for i := range db.segments {
-		segment = db.segments[len(db.segments)-i-1]
-		segment.lock.RLock()
-		position, ok = segment.index[key]
-		segment.lock.RUnlock()
-		if ok {
-			break
-		}
-	}
-
-	if !ok {
-		return ErrNotFound
-	}
-
-	deletionToken := []byte("DELETED")
-	file, err := os.OpenFile(segment.outPath, os.O_RDWR, 0o600)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	_, err = file.WriteAt(deletionToken, position)
-	if err != nil {
-		return err
-	}
-
-	segment.lock.Lock()
-	delete(segment.index, key)
-	segment.lock.Unlock()
-
-	return nil
+	return db.Put(key, "DELETED")
 }
 
 func (db *Db) Close() { db.out.Close() }
