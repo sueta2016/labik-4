@@ -17,7 +17,7 @@ type TestSuite struct{}
 var _ = Suite(&TestSuite{})
 
 func (s *TestSuite) TestBalancer(c *C) {
-	// TODO: Реалізуйте юніт-тест для балансувальникка.
+
 	address1 := getIndex("127.0.0.1:8080")
 	address2 := getIndex("192.168.0.0:80")
 	address3 := getIndex("26.143.218.9:80")
@@ -43,7 +43,7 @@ func (s *TestSuite) TestHealth(c *C) {
 	parsedURL1, _ := url.Parse(server1.URL)
 	hostURL1 := parsedURL1.Host
 
-	parsedURL2, _ := url.Parse(server1.URL)
+	parsedURL2, _ := url.Parse(server2.URL)
 	hostURL2 := parsedURL2.Host
 
 	servers := []string{
@@ -55,7 +55,13 @@ func (s *TestSuite) TestHealth(c *C) {
 	healthCheck(servers, result)
 	time.Sleep(12 * time.Second)
 
-	c.Assert(result[0], Equals, hostURL1)
+	server1.Close()
+	time.Sleep(12 * time.Second)
+
+
+	c.Assert(result[0], Equals, "")
+
+
 	c.Assert(result[1], Equals, hostURL2)
 	c.Assert(result[2], Equals, "")
 }
